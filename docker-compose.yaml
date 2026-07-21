@@ -1,0 +1,67 @@
+version: '3.8'
+
+networks:
+  keychat_secure_mesh:
+    driver: bridge
+
+volumes:
+  postgres_data:
+  redis_ephemeral_cache:
+
+services:
+  postgres:
+    image: postgres:16-alpine
+    container_name: keychat_db
+    networks:
+      - keychat_secure_mesh
+    environment:
+      POSTGRES_USER: ${DB_USER:-keychat_ops}
+      POSTGRES_PASSWORD: ${DB_PASSWORD:-InitPass}
+      POSTGRES_DB: keychat_metadata
+    ports:
+      - "5433:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${DB_USER:-keychat_ops} -d keychat_metadata"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  redis:
+    image: redis:8.8-alpine
+    container_name: keychat_redis
+    networks:
+      - keychat_secure_mesh
+    command: redis-server --appendonly yes --requirepass ${REDIS_PASSWORD:-InitPass}
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_ephemeral_cache:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "-a", "${REDIS_PASSWORD:-InitPass}", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 5
+
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: keychat_backend
+    networks:
+      - keychat_secure_mesh
+    environment:
+      - ENVIRONMENT=development
+      - DATABASE_URL=postgresql+asyncpg://${DB_USER:-keychat_ops}:${DB_PASSWORD:-InitPass}@postgres:5432/${DB_NAME:-keychat_metadata}
+      - REDIS_URL=redis://:${REDIS_PASSWORD:-InitPass}@redis:6379/0
+      - JWT_SECRET_KEY=${JWT_SECRET_KEY:-d9921294b25e10509989e11a5e8e3aa54b7f0595308a6ed45d5cd317662029b7}
+      - MESSAGE_RETENTION_HOURS=24
+    ports:
+      - "8000:8000"
+
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy

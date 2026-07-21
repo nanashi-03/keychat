@@ -1,0 +1,12 @@
+fastapi
+uvicorn[standard]
+sqlalchemy[asyncio]
+asyncpg
+pydantic[email]
+pydantic-settings
+pyjwt
+passlib[bcrypt]
+bcrypt==3.2.2
+redis
+websockets
+python-multipart
