@@ -22,14 +22,14 @@ help:
 # Launch only the foundational database, cache, and object storage containers in detached mode
 up:
 	@echo "Initiating KeyChat database, cache, frontend, and backend..."
-	podman compose up -d postgres redis backend
+	podman compose up -d postgres redis backend frontend
 	@echo "Waiting for service container health status loops to resolve..."
 	@podman compose ps
 
 # Stop the running database, cache, and storage services
 down:
 	@echo "Stopping KeyChat infrastructure containers..."
-	podman compose stop postgres redis backend
+	podman compose stop postgres redis backend frontend
 
 # Force a full bounce of the state containers
 restart: down up
@@ -41,7 +41,7 @@ status:
 
 # Follow container application outputs
 logs:
-	podman compose logs -f --tail=100 postgres redis backend
+	podman compose logs -f --tail=100 postgres redis backend frontend
 
 # Open direct interactive CLI to query the PostgreSQL system catalog metadata maps
 db-shell:
@@ -62,4 +62,4 @@ clean:
 # Rebuild all containers from scratch
 rebuild: down clean up
 	@echo "Rebuilding all containers from scratch..."
-	podman compose up --build --no-cache -d redis postgres backend
+	podman compose up --build --no-cache -d redis postgres backend frontend

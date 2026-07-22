@@ -65,3 +65,15 @@ services:
         condition: service_healthy
       redis:
         condition: service_healthy
+
+  frontend:
+      build:
+        context: ./frontend
+        dockerfile: Dockerfile
+      container_name: keychat_frontend
+      networks:
+        - keychat_secure_mesh
+      ports:
+        - "0.0.0.0:8001:80"
+      depends_on:
+        - backend
