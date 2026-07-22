@@ -51,8 +51,7 @@ async def send_message(
         "created_at": db_msg.created_at.isoformat()
     }
 
-    # Broadcast via Redis Pub/Sub to all members of the target room
-    participant_usernames = [p.username for p in room.participants]
-    await manager.publish_message(participant_usernames, payload)
+    # Publish message strictly to room channel: room:<room_id>
+    await manager.publish_to_room(str(db_msg.room_id), payload)
 
     return db_msg

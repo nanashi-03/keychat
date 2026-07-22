@@ -1,3 +1,5 @@
+-include .env
+
 .PHONY: up down restart status logs clean db-shell redis-shell Help
 
 # Default target when running just 'make'
@@ -44,12 +46,13 @@ logs:
 # Open direct interactive CLI to query the PostgreSQL system catalog metadata maps
 db-shell:
 	@echo "Entering interactive psql console environment..."
-	podman compose exec postgres psql -U keychat_ops -d keychat_metadata
+	podman compose exec postgres psql -U ${DB_USER} -d ${DB_NAME}
 
 # Open direct interactive CLI to run operational cache checks using the cluster password
 redis-shell:
 	@echo "Connecting to protected Redis command console..."
-	podman compose exec redis redis-cli -a InitPass
+	podman compose exec redis redis-cli -a ${REDIS_PASSWORD}
+
 # Complete teardown. WARNING: This wipes out all database records and storage blobs
 clean:
 	@echo "WARNING: Purging all storage blocks and removing volumes from disk!"
